@@ -1,0 +1,32 @@
+[
+  {
+    "id": "moxxqz70yqved4jgfhp",
+    "title": "测试任务",
+    "description": "测试描述",
+    "userStoryId": "moxxp73awp1djjfo6ik",
+    "creatorId": "moxulhcve2t0gp6btlt",
+    "assigneeId": "moxulhcve2t0gp6btlt",
+    "status": "in-progress",
+    "type": "dev",
+    "startDate": "2026-05-09",
+    "endDate": "2026-05-10",
+    "dependsOn": [],
+    "createdAt": "2026-05-09T06:00:55.980Z",
+    "updatedAt": "2026-05-09T06:03:52.634Z"
+  },
+  {
+    "id": "moxxu3mfqfum2ojkfhn",
+    "title": "新任务测试",
+    "description": "测试任务描述",
+    "userStoryId": "moxxp73awp1djjfo6ik",
+    "creatorId": "m1",
+    "assigneeId": "m2",
+    "status": "todo",
+    "type": "dev",
+    "startDate": "2026-05-09",
+    "endDate": "2026-05-10",
+    "dependsOn": [],
+    "createdAt": "2026-05-09T06:03:21.687Z",
+    "updatedAt": "2026-05-09T06:03:51.642Z"
+  }
+]
