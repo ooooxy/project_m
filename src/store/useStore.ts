@@ -16,7 +16,6 @@ interface StoreActions {
   setTasks: (tasks: Task[]) => void;
   addTask: (task: Task) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
-  updateTaskStatus: (id: string, status: Task['status']) => void;
   removeTask: (id: string) => void;
 }
 
@@ -77,13 +76,6 @@ export const useStore = create<AppState & StoreActions>()(
       updateTask: (id, updates) =>
         set((state) => ({
           tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
-        })),
-
-      updateTaskStatus: (id, status) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === id ? { ...t, status } : t
-          ),
         })),
 
       removeTask: (id) =>

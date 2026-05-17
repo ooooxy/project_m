@@ -49,18 +49,6 @@ export const useTasks = () => {
     }
   }, []);
 
-  const updateTaskStatus = useCallback(async (id: string, status: Task['status']) => {
-    try {
-      const response = await tasksApi.updateStatus(id, status);
-      if (!response.data) throw new Error('更新任务状态失败');
-      const data = response.data;
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: data.status, updatedAt: data.updatedAt } : t));
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
-  }, []);
-
   const deleteTask = useCallback(async (id: string) => {
     try {
       const response = await tasksApi.delete(id);
@@ -79,7 +67,6 @@ export const useTasks = () => {
     fetchTasks,
     createTask,
     updateTask,
-    updateTaskStatus,
     deleteTask,
   };
 };
