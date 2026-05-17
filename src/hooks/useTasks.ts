@@ -26,11 +26,10 @@ export const useTasks = () => {
   const createTask = useCallback(async (data: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const response = await tasksApi.create(data);
-      if (response.success && response.data) {
-        const newTask = response.data;
-        setTasks(prev => [...prev, newTask]);
-        return newTask;
-      }
+      if (!response.data) throw new Error('创建任务失败');
+      const newTask = response.data;
+      setTasks(prev => [...prev, newTask]);
+      return newTask;
     } catch (err) {
       console.error(err);
       throw err;
@@ -40,11 +39,10 @@ export const useTasks = () => {
   const updateTask = useCallback(async (id: string, data: Partial<Task>) => {
     try {
       const response = await tasksApi.update(id, data);
-      if (response.success && response.data) {
-        const updated = response.data;
-        setTasks(prev => prev.map(t => t.id === id ? updated : t));
-        return updated;
-      }
+      if (!response.data) throw new Error('更新任务失败');
+      const updated = response.data;
+      setTasks(prev => prev.map(t => t.id === id ? updated : t));
+      return updated;
     } catch (err) {
       console.error(err);
       throw err;
@@ -54,10 +52,9 @@ export const useTasks = () => {
   const updateTaskStatus = useCallback(async (id: string, status: Task['status']) => {
     try {
       const response = await tasksApi.updateStatus(id, status);
-      if (response.success && response.data) {
-        const data = response.data;
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, status: data.status, updatedAt: data.updatedAt } : t));
-      }
+      if (!response.data) throw new Error('更新任务状态失败');
+      const data = response.data;
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: data.status, updatedAt: data.updatedAt } : t));
     } catch (err) {
       console.error(err);
       throw err;
@@ -67,9 +64,8 @@ export const useTasks = () => {
   const deleteTask = useCallback(async (id: string) => {
     try {
       const response = await tasksApi.delete(id);
-      if (response.success) {
-        setTasks(prev => prev.filter(t => t.id !== id));
-      }
+      if (!response.success) throw new Error('删除任务失败');
+      setTasks(prev => prev.filter(t => t.id !== id));
     } catch (err) {
       console.error(err);
       throw err;

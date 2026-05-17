@@ -15,6 +15,7 @@ const getStatusText = (status: string) => {
     case 'todo': return '待办';
     case 'in-progress': return '进行中';
     case 'review': return '待评审';
+    case 'blocked': return '阻塞';
     case 'done': return '已完成';
     default: return status;
   }
@@ -53,6 +54,7 @@ export const TaskBar: React.FC<TaskBarProps> = ({ task, assignee, position, row 
     done: 'bg-green-500 hover:bg-green-600',
     'in-progress': 'bg-blue-500 hover:bg-blue-600',
     review: 'bg-amber-500 hover:bg-amber-600',
+    blocked: 'bg-red-500 hover:bg-red-600',
     todo: 'bg-slate-400 hover:bg-slate-500',
   };
 
@@ -60,6 +62,7 @@ export const TaskBar: React.FC<TaskBarProps> = ({ task, assignee, position, row 
     done: 'bg-green-600',
     'in-progress': 'bg-blue-600',
     review: 'bg-amber-600',
+    blocked: 'bg-red-600',
     todo: 'bg-slate-600',
   };
 

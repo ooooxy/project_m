@@ -26,11 +26,10 @@ export const useStories = () => {
   const createStory = useCallback(async (data: Omit<UserStory, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const response = await storiesApi.create(data);
-      if (response.success && response.data) {
-        const newStory = response.data;
-        setStories(prev => [...prev, newStory]);
-        return newStory;
-      }
+      if (!response.data) throw new Error('创建用户故事失败');
+      const newStory = response.data;
+      setStories(prev => [...prev, newStory]);
+      return newStory;
     } catch (err) {
       console.error(err);
       throw err;
@@ -40,11 +39,10 @@ export const useStories = () => {
   const updateStory = useCallback(async (id: string, data: Partial<UserStory>) => {
     try {
       const response = await storiesApi.update(id, data);
-      if (response.success && response.data) {
-        const updated = response.data;
-        setStories(prev => prev.map(s => s.id === id ? updated : s));
-        return updated;
-      }
+      if (!response.data) throw new Error('更新用户故事失败');
+      const updated = response.data;
+      setStories(prev => prev.map(s => s.id === id ? updated : s));
+      return updated;
     } catch (err) {
       console.error(err);
       throw err;
@@ -54,9 +52,8 @@ export const useStories = () => {
   const deleteStory = useCallback(async (id: string) => {
     try {
       const response = await storiesApi.delete(id);
-      if (response.success) {
-        setStories(prev => prev.filter(s => s.id !== id));
-      }
+      if (!response.success) throw new Error('删除用户故事失败');
+      setStories(prev => prev.filter(s => s.id !== id));
     } catch (err) {
       console.error(err);
       throw err;

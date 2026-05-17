@@ -16,10 +16,20 @@ export interface TeamMember {
   color: string;
 }
 
+export type StoryStage =
+  | 'requirements'
+  | 'design'
+  | 'development'
+  | 'integration'
+  | 'testing'
+  | 'acceptance'
+  | 'release';
+
 export interface UserStory {
   id: string;
   title: string;
   priority: 'low' | 'medium' | 'high';
+  stage?: StoryStage;
   createdAt: string;
   updatedAt?: string;
 }
@@ -28,10 +38,10 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  userStoryId: string;
+  userStoryId?: string;
   creatorId: string;
-  assigneeId: string;
-  status: 'todo' | 'in-progress' | 'review' | 'done';
+  assigneeId?: string;
+  status: 'todo' | 'in-progress' | 'review' | 'blocked' | 'done';
   type: 'design' | 'dev' | 'test';
   startDate: string;
   endDate: string;

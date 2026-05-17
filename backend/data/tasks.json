@@ -5,14 +5,14 @@
     "description": "测试描述",
     "userStoryId": "moxxp73awp1djjfo6ik",
     "creatorId": "moxulhcve2t0gp6btlt",
-    "assigneeId": "moxulhcve2t0gp6btlt",
+    "assigneeId": "m1",
     "status": "in-progress",
     "type": "dev",
     "startDate": "2026-05-09",
     "endDate": "2026-05-10",
     "dependsOn": [],
     "createdAt": "2026-05-09T06:00:55.980Z",
-    "updatedAt": "2026-05-09T06:03:52.634Z"
+    "updatedAt": "2026-05-16T17:46:32.335Z"
   },
   {
     "id": "moxxu3mfqfum2ojkfhn",
@@ -21,12 +21,40 @@
     "userStoryId": "moxxp73awp1djjfo6ik",
     "creatorId": "m1",
     "assigneeId": "m2",
-    "status": "todo",
+    "status": "in-progress",
     "type": "dev",
     "startDate": "2026-05-09",
     "endDate": "2026-05-10",
     "dependsOn": [],
     "createdAt": "2026-05-09T06:03:21.687Z",
-    "updatedAt": "2026-05-09T06:03:51.642Z"
+    "updatedAt": "2026-05-16T15:02:10.974Z"
+  },
+  {
+    "id": "mp8n2osslo0v0hotj5",
+    "title": "全局任务",
+    "description": "",
+    "creatorId": "m1",
+    "status": "todo",
+    "type": "dev",
+    "startDate": "2026-05-16",
+    "endDate": "2026-05-17",
+    "dependsOn": [],
+    "createdAt": "2026-05-16T17:47:34.540Z",
+    "updatedAt": "2026-05-16T17:47:34.541Z"
+  },
+  {
+    "id": "mp9cc2w0wlqjv5cbyek",
+    "title": "123",
+    "description": "1234",
+    "userStoryId": "moxxp73awp1djjfo6ik",
+    "creatorId": "m1",
+    "status": "in-progress",
+    "type": "dev",
+    "startDate": "2026-05-17",
+    "endDate": "2026-05-18",
+    "dependsOn": [],
+    "createdAt": "2026-05-17T05:34:43.104Z",
+    "updatedAt": "2026-05-17T05:34:46.186Z",
+    "assigneeId": "m1"
   }
 ]

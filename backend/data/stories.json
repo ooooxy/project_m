@@ -4,6 +4,15 @@
     "title": "hihihi",
     "priority": "medium",
     "createdAt": "2026-05-09T05:59:32.902Z",
-    "updatedAt": "2026-05-09T05:59:32.903Z"
+    "updatedAt": "2026-05-17T05:37:29.940Z",
+    "stage": "release"
+  },
+  {
+    "id": "mp9c8htllwhqss9sjsb",
+    "title": "用户可以登录注册，打球数据完成绑定",
+    "priority": "medium",
+    "stage": "requirements",
+    "createdAt": "2026-05-17T05:31:55.833Z",
+    "updatedAt": "2026-05-17T05:31:55.833Z"
   }
 ]
