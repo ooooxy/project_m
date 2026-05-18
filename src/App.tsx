@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-ro
 import { Navigation } from './components/Navigation';
 import { KanbanPage } from './pages/KanbanPage';
 import { StoriesPage } from './pages/StoriesPage';
+import { GanttPage } from './pages/GanttPage';
 import { TeamPage } from './pages/TeamPage';
 import { LoginPage } from './pages/LoginPage';
 import { useStore } from './store/useStore';
@@ -28,6 +29,8 @@ const AppContent: React.FC = () => {
       setActiveView('kanban');
     } else if (path === '/stories') {
       setActiveView('stories');
+    } else if (path === '/gantt') {
+      setActiveView('gantt');
     } else if (path === '/team') {
       setActiveView('team');
     }
@@ -45,6 +48,8 @@ const AppContent: React.FC = () => {
         return <KanbanPage />;
       case 'stories':
         return <StoriesPage />;
+      case 'gantt':
+        return <GanttPage />;
       case 'team':
         return <TeamPage />;
       default:

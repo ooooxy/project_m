@@ -11,15 +11,18 @@ import { GANTT_CHART_CONFIG } from '../constants';
 import type { UserStory, Task } from '../types';
 
 interface NewStoryFormProps {
-  onSubmit: (story: { title: string; priority: 'low' | 'medium' | 'high' }) => void;
+  initialKind: 'story' | 'defect';
+  onSubmit: (story: { title: string; kind: 'story' | 'defect'; priority: 'low' | 'medium' | 'high' }) => void;
   onCancel: () => void;
 }
 
 const NewStoryForm: React.FC<NewStoryFormProps> = React.memo(({
+  initialKind,
   onSubmit,
   onCancel,
 }) => {
   const [title, setTitle] = useState('');
+  const [kind, setKind] = useState<'story' | 'defect'>(initialKind);
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,9 +36,10 @@ const NewStoryForm: React.FC<NewStoryFormProps> = React.memo(({
     e.preventDefault();
     if (!title.trim()) return;
     
-    onSubmit({ title, priority });
+    onSubmit({ title, kind, priority });
     
     setTitle('');
+    setKind(initialKind);
     setPriority('medium');
   };
 
@@ -44,7 +48,7 @@ const NewStoryForm: React.FC<NewStoryFormProps> = React.memo(({
       <div className="space-y-3">
         <textarea
           ref={titleInputRef as any}
-          placeholder="用户故事"
+          placeholder={kind === 'defect' ? '缺陷' : '用户故事'}
           className="input w-full"
           rows={3}
           value={title}
@@ -52,6 +56,14 @@ const NewStoryForm: React.FC<NewStoryFormProps> = React.memo(({
           required
         />
         <div className="grid grid-cols-2 gap-2">
+          <select
+            className="select text-sm"
+            value={kind}
+            onChange={(e) => setKind(e.target.value as any)}
+          >
+            <option value="story">用户故事</option>
+            <option value="defect">缺陷</option>
+          </select>
           <select
             className="select text-sm"
             value={priority}
@@ -278,6 +290,8 @@ const columnConfigs: ColumnConfig[] = [
 ];
 
 const StoryCard: React.FC<{ story: UserStory; isSelected?: boolean; onClick?: () => void }> = ({ story, isSelected, onClick }) => {
+  const kind = story.kind ?? 'story';
+
   return (
     <div 
       className={`card p-3 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : 'hover:bg-slate-50'}`}
@@ -286,6 +300,9 @@ const StoryCard: React.FC<{ story: UserStory; isSelected?: boolean; onClick?: ()
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-1.5 mb-1.5">
+            <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${kind === 'defect' ? 'bg-red-100 text-red-700' : 'bg-primary-100 text-primary-700'}`}>
+              {kind === 'defect' ? '缺陷' : '故事'}
+            </span>
             <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(story.priority)}`}>
               {story.priority === 'high' ? '高优先级' : story.priority === 'medium' ? '中优先级' : '低优先级'}
             </span>
@@ -316,8 +333,12 @@ export const StoriesPage: React.FC = () => {
     fetchTeamMembers();
   }, [fetchStories, fetchTasks, fetchTeamMembers]);
   
-  const currentUserId = user?.id || teamMembers[0]?.id || '';
+  const currentUserId = useMemo(() => {
+    if (user?.id && teamMembers.some((m) => m.id === user.id)) return user.id;
+    return teamMembers[0]?.id || '';
+  }, [user?.id, teamMembers]);
   const [isAddingStory, setIsAddingStory] = useState(false);
+  const [addingStoryKind, setAddingStoryKind] = useState<'story' | 'defect'>('story');
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [addingTaskType, setAddingTaskType] = useState<'design' | 'dev' | 'test'>('dev');
@@ -388,13 +409,15 @@ export const StoriesPage: React.FC = () => {
     return date.getTime() === today.getTime();
   };
 
-  const handleSubmit = useCallback((story: { title: string; priority: 'low' | 'medium' | 'high' }) => {
+  const handleSubmit = useCallback((story: { title: string; kind: 'story' | 'defect'; priority: 'low' | 'medium' | 'high' }) => {
     const data: Omit<UserStory, 'id' | 'createdAt' | 'updatedAt'> = {
       title: story.title,
+      kind: story.kind,
       priority: story.priority,
     };
     createStory(data).then(() => {
       setIsAddingStory(false);
+      setAddingStoryKind('story');
       fetchStories(); // 重新加载数据
     }).catch((error) => {
       console.error('创建故事失败:', error);
@@ -403,6 +426,7 @@ export const StoriesPage: React.FC = () => {
 
   const handleCancel = useCallback(() => {
     setIsAddingStory(false);
+    setAddingStoryKind('story');
   }, []);
 
   const handleTaskSubmit = useCallback(async (task: { title: string; description: string; userStoryId: string; creatorId: string; assigneeId: string; type: 'design' | 'dev' | 'test'; startDate: string; endDate: string }) => {
@@ -666,194 +690,196 @@ export const StoriesPage: React.FC = () => {
         </div>
       )}
       
-      {/* 甘特图组件 */}
-      <div className="mb-4 bg-white border border-slate-200 rounded-xl shadow-sm overflow-visible">
-        <div 
-          className="flex items-center justify-between px-3 py-2.5 border-b border-slate-200 cursor-pointer"
-          onClick={() => setIsGanttExpanded(!isGanttExpanded)}
-        >
-          <div className="flex items-center space-x-2">
-            {isGanttExpanded ? <ChevronDown size={18} className="text-slate-500" /> : <ChevronRight size={18} className="text-slate-500" />}
-            <h3 className="font-semibold text-slate-700">项目时间线</h3>
-            <span className="bg-primary-100 text-primary-600 text-xs px-2 py-0.5 rounded-full">
-              {tasks.length} 个任务
-            </span>
+      {/* 甘特图组件（已迁移到导航栏「时间线」Tab） */}
+      {false && (
+        <div className="mb-4 bg-white border border-slate-200 rounded-xl shadow-sm overflow-visible">
+          <div 
+            className="flex items-center justify-between px-3 py-2.5 border-b border-slate-200 cursor-pointer"
+            onClick={() => setIsGanttExpanded(!isGanttExpanded)}
+          >
+            <div className="flex items-center space-x-2">
+              {isGanttExpanded ? <ChevronDown size={18} className="text-slate-500" /> : <ChevronRight size={18} className="text-slate-500" />}
+              <h3 className="font-semibold text-slate-700">项目时间线</h3>
+              <span className="bg-primary-100 text-primary-600 text-xs px-2 py-0.5 rounded-full">
+                {tasks.length} 个任务
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded bg-slate-400" />
+                <span className="text-xs text-slate-600">待办</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded bg-blue-500" />
+                <span className="text-xs text-slate-600">进行中</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded bg-yellow-500" />
+                <span className="text-xs text-slate-600">待评审</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded bg-green-500" />
+                <span className="text-xs text-slate-600">已完成</span>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded bg-slate-400" />
-              <span className="text-xs text-slate-600">待办</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded bg-blue-500" />
-              <span className="text-xs text-slate-600">进行中</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded bg-yellow-500" />
-              <span className="text-xs text-slate-600">待评审</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded bg-green-500" />
-              <span className="text-xs text-slate-600">已完成</span>
-            </div>
-          </div>
-        </div>
-        
-        {isGanttExpanded && (
-          <div className="card overflow-x-auto relative overflow-hidden" style={{ borderRadius: '0 0 10px 10px', boxShadow: 'none', boxSizing: 'border-box' }}>
-            {/* 头部行 */}
-            <div className="flex">
-              {/* 左侧头部 */}
-              <div className="w-48 flex-shrink-0 bg-white border-r border-slate-200 px-3 flex flex-col justify-center">
-                <div className="text-xs font-semibold text-slate-600 mb-2">{weekRange}</div>
-                <button
-                  onClick={handleToday}
-                  className="px-2.5 py-1.5 bg-primary-500 text-white text-xs font-medium rounded-lg hover:bg-primary-600 transition-colors shadow-sm"
-                  aria-label="回到今日"
-                >
-                  <span>回到今日</span>
-                </button>
+          
+          {isGanttExpanded && (
+            <div className="card overflow-x-auto relative overflow-hidden" style={{ borderRadius: '0 0 10px 10px', boxShadow: 'none', boxSizing: 'border-box' }}>
+              {/* 头部行 */}
+              <div className="flex">
+                {/* 左侧头部 */}
+                <div className="w-48 flex-shrink-0 bg-white border-r border-slate-200 px-3 flex flex-col justify-center">
+                  <div className="text-xs font-semibold text-slate-600 mb-2">{weekRange}</div>
+                  <button
+                    onClick={handleToday}
+                    className="px-2.5 py-1.5 bg-primary-500 text-white text-xs font-medium rounded-lg hover:bg-primary-600 transition-colors shadow-sm"
+                    aria-label="回到今日"
+                  >
+                    <span>回到今日</span>
+                  </button>
+                </div>
+                
+                {/* 右侧头部 */}
+                <div className="flex-1">
+                  {/* 月份标题行 */}
+                  <div className="flex bg-gradient-to-b from-slate-50 to-white">
+                    <div className="w-8 bg-white border-r border-slate-200" />
+                    {dateLabels.map((date, i) => {
+                      const isFirstDayOfMonth = date.getDate() === 1;
+                      const isFirstDay = i === 0;
+                      
+                      let monthLabel = '';
+                      if (isFirstDay || isFirstDayOfMonth) {
+                        const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+                        monthLabel = `${date.getFullYear()}年${months[date.getMonth()]}`;
+                      }
+                      
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 text-center py-2 border-l border-slate-100"
+                          style={{ minWidth: `${minDayWidth}px` }}
+                        >
+                          {monthLabel && (
+                            <div className="text-xs font-semibold text-slate-600">
+                              {monthLabel}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <div className="w-8 bg-white border-l border-slate-200" />
+                  </div>
+                  
+                  {/* 日期行 */}
+                  <div className="flex border-b border-slate-200">
+                    <button
+                      onClick={handlePrev}
+                      className="flex-shrink-0 flex items-center justify-center w-8 bg-white border-r border-slate-200 hover:bg-slate-50 transition-colors"
+                      aria-label="上14天"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    {dateLabels.map((date, i) => {
+                      const dayOfWeek = date.getDay();
+                      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                      const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+                      
+                      return (
+                        <div
+                          key={i}
+                          className={`flex-1 text-center border-l border-slate-100 transition-all ${
+                            isToday(date)
+                              ? 'bg-primary-500 text-white'
+                              : isWeekend
+                                ? 'text-slate-400 bg-slate-50/50'
+                                : 'text-slate-600'
+                          }`}
+                          style={{ minWidth: `${minDayWidth}px` }}
+                        >
+                          <div className={`text-xs ${isToday(date) ? 'font-bold' : ''} py-1`}>
+                            {date.getDate()}
+                          </div>
+                          <div className={`text-[10px] opacity-70 pb-1 ${isToday(date) ? 'text-white/70' : ''}`}>
+                            {weekDays[dayOfWeek]}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <button
+                      onClick={handleNext}
+                      className="flex-shrink-0 flex items-center justify-center w-8 bg-white border-l border-slate-200 hover:bg-slate-50 transition-colors"
+                      aria-label="下14天"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
               
-              {/* 右侧头部 */}
-              <div className="flex-1">
-                {/* 月份标题行 */}
-                <div className="flex bg-gradient-to-b from-slate-50 to-white">
-                  <div className="w-8 bg-white border-r border-slate-200" />
-                  {dateLabels.map((date, i) => {
-                    const isFirstDayOfMonth = date.getDate() === 1;
-                    const isFirstDay = i === 0;
-                    
-                    let monthLabel = '';
-                    if (isFirstDay || isFirstDayOfMonth) {
-                      const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
-                      monthLabel = `${date.getFullYear()}年${months[date.getMonth()]}`;
-                    }
-                    
-                    return (
-                      <div
-                        key={i}
-                        className="flex-1 text-center py-2 border-l border-slate-100"
-                        style={{ minWidth: `${minDayWidth}px` }}
-                      >
-                        {monthLabel && (
-                          <div className="text-xs font-semibold text-slate-600">
-                            {monthLabel}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  <div className="w-8 bg-white border-l border-slate-200" />
-                </div>
-                
-                {/* 日期行 */}
-                <div className="flex border-b border-slate-200">
-                  <button
-                    onClick={handlePrev}
-                    className="flex-shrink-0 flex items-center justify-center w-8 bg-white border-r border-slate-200 hover:bg-slate-50 transition-colors"
-                    aria-label="上14天"
-                  >
-                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  {dateLabels.map((date, i) => {
-                    const dayOfWeek = date.getDay();
-                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-                    
-                    return (
-                      <div
-                        key={i}
-                        className={`flex-1 text-center border-l border-slate-100 transition-all ${
-                          isToday(date)
-                            ? 'bg-primary-500 text-white'
-                            : isWeekend
-                              ? 'text-slate-400 bg-slate-50/50'
-                              : 'text-slate-600'
-                        }`}
-                        style={{ minWidth: `${minDayWidth}px` }}
-                      >
-                        <div className={`text-xs ${isToday(date) ? 'font-bold' : ''} py-1`}>
-                          {date.getDate()}
-                        </div>
-                        <div className={`text-[10px] opacity-70 pb-1 ${isToday(date) ? 'text-white/70' : ''}`}>
-                          {weekDays[dayOfWeek]}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <button
-                    onClick={handleNext}
-                    className="flex-shrink-0 flex items-center justify-center w-8 bg-white border-l border-slate-200 hover:bg-slate-50 transition-colors"
-                    aria-label="下14天"
-                  >
-                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* 任务行 */}
-            {storiesWithVisibleTasks.length > 0 ? (
-              <div className="relative">
-                {todayDayIndex >= 0 && (
-                  <div className="absolute top-0 bottom-0 w-0 border-l border-primary-500 border-dashed z-50"
-                    style={{ left: `calc(${leftPanelWidth}px + 32px + (100% - ${leftPanelWidth}px - 64px) * (${todayDayIndex} + 0.5) / ${totalDays})` }}
-                    title="今天"
-                  />
-                )}
-                
-                {storiesWithVisibleTasks.map((story: UserStory) => {
-                  const storyTasks = visibleTasks.filter(task => task.userStoryId === story.id && isTaskInView(task));
-                  const arrangedTasks = arrangeTasks(storyTasks);
-                  const rowCount = arrangedTasks.length > 0 
-                    ? Math.max(...arrangedTasks.map(t => t.row)) + 1 
-                    : 1;
+              {/* 任务行 */}
+              {storiesWithVisibleTasks.length > 0 ? (
+                <div className="relative">
+                  {todayDayIndex >= 0 && (
+                    <div className="absolute top-0 bottom-0 w-0 border-l border-primary-500 border-dashed z-50"
+                      style={{ left: `calc(${leftPanelWidth}px + 32px + (100% - ${leftPanelWidth}px - 64px) * (${todayDayIndex} + 0.5) / ${totalDays})` }}
+                      title="今天"
+                    />
+                  )}
                   
-                  return (
-                    <div key={story.id} className="flex border-b border-slate-100">
-                      {/* 左侧用户故事 */}
-                      <div 
-                        className="flex-shrink-0 bg-slate-50 border-r border-slate-100 px-3 flex items-center"
-                        style={{ width: '224px', height: `${rowCount * rowHeight}px` }}
-                      >
-                        <div className="text-sm font-medium text-slate-700 truncate">{story.title}</div>
+                  {storiesWithVisibleTasks.map((story: UserStory) => {
+                    const storyTasks = visibleTasks.filter(task => task.userStoryId === story.id && isTaskInView(task));
+                    const arrangedTasks = arrangeTasks(storyTasks);
+                    const rowCount = arrangedTasks.length > 0 
+                      ? Math.max(...arrangedTasks.map(t => t.row)) + 1 
+                      : 1;
+                    
+                    return (
+                      <div key={story.id} className="flex border-b border-slate-100">
+                        {/* 左侧用户故事 */}
+                        <div 
+                          className="flex-shrink-0 bg-slate-50 border-r border-slate-100 px-3 flex items-center"
+                          style={{ width: '224px', height: `${rowCount * rowHeight}px` }}
+                        >
+                          <div className="text-sm font-medium text-slate-700 truncate">{story.title}</div>
+                        </div>
+                        
+                        {/* 右侧任务区域 */}
+                        <div className="flex-1 relative" style={{ height: `${rowCount * rowHeight}px`, paddingLeft: '32px', paddingRight: '32px' }}>
+                          {arrangedTasks.map(task => {
+                            const position = getTaskPosition(task);
+                            const assignee = teamMembers.find((m) => m.id === task.assigneeId);
+  
+                            return (
+                              <TaskBar
+                                key={task.id}
+                                task={task}
+                                assignee={assignee}
+                                position={position}
+                                row={task.row}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                      
-                      {/* 右侧任务区域 */}
-                      <div className="flex-1 relative" style={{ height: `${rowCount * rowHeight}px`, paddingLeft: '32px', paddingRight: '32px' }}>
-                        {arrangedTasks.map(task => {
-                          const position = getTaskPosition(task);
-                          const assignee = teamMembers.find((m) => m.id === task.assigneeId);
-
-                          return (
-                            <TaskBar
-                              key={task.id}
-                              task={task}
-                              assignee={assignee}
-                              position={position}
-                              row={task.row}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-slate-400">
-                <div className="text-4xl mb-3">📅</div>
-                <div>此时间段内没有任务</div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-12 text-center text-slate-400">
+                  <div className="text-4xl mb-3">📅</div>
+                  <div>此时间段内没有任务</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex h-full gap-4">
         {/* 左侧：用户故事列表 */}
@@ -881,17 +907,33 @@ export const StoriesPage: React.FC = () => {
                 {isAuthenticated && (
                   isAddingStory ? (
                     <NewStoryForm
+                      initialKind={addingStoryKind}
                       onSubmit={handleSubmit}
                       onCancel={handleCancel}
                     />
                   ) : (
-                    <button
-                      onClick={() => setIsAddingStory(true)}
-                      className="w-full h-14 card flex items-center justify-center gap-2 bg-primary-50 border-2 border-dashed border-primary-300 rounded-lg hover:bg-primary-100 hover:border-primary-400 transition-colors"
-                    >
-                      <Plus size={18} className="text-primary-600" />
-                      <span className="text-primary-600 font-medium">新建故事</span>
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setAddingStoryKind('story');
+                          setIsAddingStory(true);
+                        }}
+                        className="w-full h-14 card flex items-center justify-center gap-2 bg-primary-50 border-2 border-dashed border-primary-300 rounded-lg hover:bg-primary-100 hover:border-primary-400 transition-colors"
+                      >
+                        <Plus size={18} className="text-primary-600" />
+                        <span className="text-primary-600 font-medium">新建用户故事</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAddingStoryKind('defect');
+                          setIsAddingStory(true);
+                        }}
+                        className="w-full h-14 card flex items-center justify-center gap-2 bg-red-50 border-2 border-dashed border-red-300 rounded-lg hover:bg-red-100 hover:border-red-400 transition-colors"
+                      >
+                        <Plus size={18} className="text-red-600" />
+                        <span className="text-red-600 font-medium">新建缺陷</span>
+                      </button>
+                    </div>
                   )
                 )}
                 {storiesWithNoTasks.length === 0 && !isAddingStory ? (

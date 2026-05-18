@@ -28,6 +28,7 @@ export type StoryStage =
 export interface UserStory {
   id: string;
   title: string;
+  kind?: 'story' | 'defect';
   priority: 'low' | 'medium' | 'high';
   stage?: StoryStage;
   createdAt: string;

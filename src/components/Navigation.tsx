@@ -1,5 +1,5 @@
 import React from 'react';
-import { Kanban, FileText, Users } from 'lucide-react';
+import { Calendar, Kanban, FileText, Users } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { AuthButton } from './AuthButton';
 import type { ViewType } from '../types';
@@ -12,6 +12,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { view: 'stories', label: '用户故事', icon: <FileText size={20} /> },
+  { view: 'gantt', label: '时间线', icon: <Calendar size={20} /> },
   { view: 'kanban', label: '看板', icon: <Kanban size={20} /> },
   { view: 'team', label: '团队', icon: <Users size={20} /> },
 ];

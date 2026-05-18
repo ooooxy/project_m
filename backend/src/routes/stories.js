@@ -18,11 +18,11 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { title, priority = 'medium', stage = 'requirements' } = req.body;
+  const { title, kind = 'story', priority = 'medium', stage = 'requirements' } = req.body;
   if (!title) {
     return res.status(400).json({ success: false, message: '缺少必要参数' });
   }
-  const newStory = db.stories.create({ title, priority, stage });
+  const newStory = db.stories.create({ title, kind, priority, stage });
   res.status(201).json({ success: true, data: newStory });
 });
 

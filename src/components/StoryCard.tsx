@@ -33,6 +33,7 @@ export const StoryCard: React.FC<StoryCardProps> = ({
   onBadgeClick,
 }) => {
   const stage = (story.stage ?? 'requirements') as StoryStage;
+  const kind = story.kind ?? 'story';
 
   return (
     <div
@@ -45,9 +46,14 @@ export const StoryCard: React.FC<StoryCardProps> = ({
       data-stage={stage}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityClass(story.priority)}`}>
-          优先级 {getPriorityLabel(story.priority)}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${kind === 'defect' ? 'bg-red-100 text-red-700' : 'bg-primary-100 text-primary-800'}`}>
+            {kind === 'defect' ? '缺陷' : '故事'}
+          </span>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityClass(story.priority)}`}>
+            优先级 {getPriorityLabel(story.priority)}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           {blockedCount > 0 && (
             <button
@@ -79,4 +85,3 @@ export const StoryCard: React.FC<StoryCardProps> = ({
     </div>
   );
 };
-
